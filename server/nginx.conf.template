@@ -1,0 +1,34 @@
+server {
+    listen 8088 default_server;
+    server_name _;
+    autoindex off;
+    server_tokens off;
+
+    location ~ ^/__TOKEN__/saves/([a-z0-9-]+)/([a-z0-9-]+\.(?:srm|state))$ {
+        alias __ROOT__/saves/$1/$2;
+        dav_methods PUT;
+        create_full_put_path on;
+        dav_access user:rw group:r all:r;
+        client_max_body_size 8m;
+        add_header Access-Control-Allow-Origin * always;
+        add_header Access-Control-Allow-Methods "GET, PUT, OPTIONS" always;
+        add_header Cache-Control no-store always;
+        if ($request_method = OPTIONS) { return 204; }
+    }
+
+    location ~ ^/__TOKEN__/catalog/([a-z0-9-]+\.json)$ {
+        alias __ROOT__/catalog/$1;
+        add_header Access-Control-Allow-Origin * always;
+        add_header Cache-Control no-cache always;
+    }
+
+    location /__TOKEN__/ {
+        alias __ROOT__/;
+        limit_except GET { deny all; }
+        add_header Access-Control-Allow-Origin * always;
+    }
+
+    location / {
+        return 404;
+    }
+}
