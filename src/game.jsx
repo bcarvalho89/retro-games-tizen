@@ -5,7 +5,7 @@ import { loadCore } from './core.js';
 import { createVideo } from './video.js';
 import { createAudio } from './audio.js';
 import { createRing } from './ring.js';
-import { padsToMasks, keyMask, createMenuCombo } from './input.js';
+import { padsToMasks, createKeys, createMenuCombo } from './input.js';
 import { SERVER, useNav, Dialog, toast, cls } from './ui.jsx';
 
 const MAX_CATCHUP = 4;
@@ -67,7 +67,7 @@ export function Game({ consoleId, game, resume, onExit }) {
   useEffect(() => {
     let alive = true;
     let raf;
-    const keys = {};
+    const keys = createKeys();
     startSession(consoleId, game, resume).then(({ core, saves, hasState: has }) => {
       if (!alive) return;
       const ring = createRing(Math.round(core.rate / 4));
@@ -87,8 +87,7 @@ export function Game({ consoleId, game, resume, onExit }) {
         let due = Math.floor((now - s.start) / 1000 * core.fps) - s.done;
         if (due > MAX_CATCHUP) { s.done += due - MAX_CATCHUP; due = MAX_CATCHUP; }
         if (due <= 0) return;
-        let keyBits = 0;
-        for (const k in keys) keyBits |= keys[k];
+        const keyBits = keys.mask();
         const pads = padsToMasks(navigator.getGamepads ? navigator.getGamepads() : []);
         const r = combo([pads[0] | keyBits, pads[1]], now);
         if (r.open) return openMenu();
@@ -111,13 +110,13 @@ export function Game({ consoleId, game, resume, onExit }) {
     const down = e => {
       if (paused.current) return;
       if (BACK_KEYS.includes(e.keyCode)) { e.preventDefault(); session.current && session.current.openMenu(); return; }
-      const m = keyMask(e.keyCode);
-      if (m) { keys[e.keyCode] = m; e.preventDefault(); }
+      if (keys.down(e.keyCode)) e.preventDefault();
     };
-    const up = e => { delete keys[e.keyCode]; };
+    const up = e => keys.up(e.keyCode);
     // leaving the app (Home / switching source) may kill it before the next autosave tick
     const hidden = () => {
       const s = session.current;
+      keys.clear();
       if (document.hidden && s) { s.autosave.flush(); if (!paused.current) s.openMenu(); }
     };
     window.addEventListener('keydown', down);

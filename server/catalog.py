@@ -93,11 +93,19 @@ def _int(value):
 def build_entries(files, meta, has_cover, console):
     titles = _by_title(meta)
     entries = []
-    for filename, crc in files.items():
+    used = set()
+    for filename, crc in sorted(files.items()):
         info = meta.get(crc) or titles.get(title_key(os.path.splitext(filename)[0])) or {}
         name = info.get("name")
+        # the id names the save files: two ROMs sharing one would overwrite each other's progress
+        base_id = normalize_id(filename) or "crc-" + crc.lower()
+        uid, n = base_id, 1
+        while uid in used:
+            n += 1
+            uid = "%s-%d" % (base_id, n)
+        used.add(uid)
         entry = {
-            "id": normalize_id(filename),
+            "id": uid,
             "file": filename,
             "title": display_title(name or os.path.splitext(filename)[0]),
             "year": _int(info.get("releaseyear")),

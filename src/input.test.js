@@ -88,3 +88,16 @@ console.log('input ok');
   assert.deepStrictEqual(combo([1 << BTN.A, 0], 20).masks, [1 << BTN.A, 0]);
   console.log('combo swallow ok');
 }
+
+{
+  const { createKeys } = await import('./input.js');
+  assert.strictEqual(keyMask(10252), 1 << BTN.START);
+  const keys = createKeys();
+  keys.down(38); keys.down(13);
+  assert.strictEqual(keys.mask(), (1 << BTN.UP) | (1 << BTN.A));
+  keys.up(38);
+  assert.strictEqual(keys.mask(), 1 << BTN.A);
+  keys.clear();
+  assert.strictEqual(keys.mask(), 0);
+  console.log('keys ok');
+}

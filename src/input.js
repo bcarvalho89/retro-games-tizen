@@ -2,7 +2,7 @@ export const BTN = { B: 0, Y: 1, SELECT: 2, START: 3, UP: 4, DOWN: 5, LEFT: 6, R
 
 const PAD = { 0: BTN.B, 1: BTN.A, 2: BTN.Y, 3: BTN.X, 4: BTN.L, 5: BTN.R, 6: BTN.L, 7: BTN.R, 8: BTN.SELECT, 9: BTN.START, 12: BTN.UP, 13: BTN.DOWN, 14: BTN.LEFT, 15: BTN.RIGHT };
 const KEYS = {
-  38: BTN.UP, 40: BTN.DOWN, 37: BTN.LEFT, 39: BTN.RIGHT, 13: BTN.A,
+  38: BTN.UP, 40: BTN.DOWN, 37: BTN.LEFT, 39: BTN.RIGHT, 13: BTN.A, 10252: BTN.START,
   403: BTN.B, 404: BTN.A, 405: BTN.Y, 406: BTN.X,
   90: BTN.B, 88: BTN.A, 65: BTN.Y, 83: BTN.X, 81: BTN.L, 87: BTN.R, 32: BTN.START, 16: BTN.SELECT,
 };
@@ -86,5 +86,16 @@ export function createNav(delay = 400, repeat = 120) {
     }
     primed = true;
     return out;
+  };
+}
+
+export function createKeys() {
+  let held = {};
+  return {
+    down(keyCode) { const m = keyMask(keyCode); if (m) held[keyCode] = m; return m; },
+    up(keyCode) { delete held[keyCode]; },
+    // a key held when the app is hidden never gets its keyup; left set, it would keep the swallow on resume forever
+    clear() { held = {}; },
+    mask() { let m = 0; for (const k in held) m |= held[k]; return m; },
   };
 }

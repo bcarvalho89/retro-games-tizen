@@ -8,3 +8,4 @@ app/main.js
 docs/
 cores/vendor/
 server-data/
+__pycache__/

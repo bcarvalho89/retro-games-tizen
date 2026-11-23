@@ -101,6 +101,13 @@ def test_build_entries_falls_back_to_title_match():
     assert entries[0]["title"] == "Legend of Zelda, The - A Link to the Past"
 
 
+def test_build_entries_unique_nonempty_ids():
+    files = {"Game (USA).sfc": "11111111", "Game (USA).smc": "22222222", "\u30b9\u30fc\u30d1\u30fc.sfc": "ABCDEF01"}
+    ids = [e["id"] for e in c.build_entries(files, {}, has_cover=lambda e: False, console="snes")]
+    assert len(set(ids)) == 3 and all(ids), ids
+    assert "crc-abcdef01" in ids
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
