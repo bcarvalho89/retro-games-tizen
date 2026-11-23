@@ -1,23 +1,22 @@
-# Servidor (VPS Oracle)
+# Servidor (VPS Oracle, `ssh oracle`)
 
-Só nginx servindo arquivos. Layout em `/srv/retro`:
+nginx em contêiner Docker (`retro-nginx`, porta 8088), ao lado do Caddy que já ocupa 80/443. Layout em `/srv/retro`:
 
 ```
 cores/snes.js          npm run core:build → dist/cores/snes.js
 roms/snes/             ROMs (.sfc/.smc/.fig; .zip é extraído pelo catálogo)
 covers/snes/           gerado
 catalog/snes.json      gerado
-saves/snes/            gravado pela TV (PUT)
+saves/snes/            gravado pela TV (PUT); dono uid 101 (nginx do contêiner)
 ```
+
+Na VPS: `~/retro/` tem `catalog.py`, `nginx.conf.template`, `retro.conf` (gerado) e `token` (600); `~/libretro-database/` só os 4 `.dat` usados.
 
 ## Instalação (uma vez)
 
 ```sh
-sudo apt install -y nginx python3
-sudo mkdir -p /srv/retro/{cores,roms/snes,saves} && sudo chown -R $USER /srv/retro
-sudo chown www-data /srv/retro/saves
+sudo mkdir -p /srv/retro/{cores,roms/snes,saves} && sudo chown -R ubuntu:ubuntu /srv/retro && sudo chown 101:101 /srv/retro/saves
 
-# metadados (só os 4 .dat usados)
 mkdir -p ~/libretro-database && cd ~/libretro-database
 SYS="Nintendo - Super Nintendo Entertainment System"
 for d in no-intro releaseyear genre maxusers; do
@@ -25,21 +24,22 @@ for d in no-intro releaseyear genre maxusers; do
   curl -sfL -o "metadat/$d/$SYS.dat" "https://raw.githubusercontent.com/libretro/libretro-database/master/metadat/$d/$(echo "$SYS" | sed 's/ /%20/g').dat"
 done
 
-# nginx
-TOKEN=$(openssl rand -hex 16); echo "$TOKEN"   # guarde: vai no .env do app
-sed -e "s/__TOKEN__/$TOKEN/g" -e "s#__ROOT__#/srv/retro#g" nginx.conf.template | sudo tee /etc/nginx/sites-available/retro
-sudo ln -s /etc/nginx/sites-available/retro /etc/nginx/sites-enabled/retro
-sudo nginx -t && sudo systemctl reload nginx
+cd ~/retro && (umask 077; openssl rand -hex 16 > token)
+sed -e "s/__TOKEN__/$(cat token)/g" -e "s#__ROOT__#/srv/retro#g" nginx.conf.template > retro.conf
+sudo docker run -d --name retro-nginx --restart unless-stopped -p 8088:8088 \
+  -v /srv/retro:/srv/retro -v $HOME/retro/retro.conf:/etc/nginx/conf.d/default.conf:ro nginx:1.27-alpine
 
 # porta 8088: firewall da VPS E Security List da Oracle (Ingress TCP 8088)
-sudo iptables -I INPUT -p tcp --dport 8088 -j ACCEPT && sudo netfilter-persistent save
+sudo iptables -I INPUT 6 -p tcp -m tcp --dport 8088 -m state --state NEW -j ACCEPT && sudo netfilter-persistent save
 ```
+
+No app: `.env` com `SERVER=http://<ip>:8088/<token>/`.
 
 ## Adicionar jogos
 
 ```sh
-rsync -av roms/snes/ vps:/srv/retro/roms/snes/
-ssh vps 'python3 ~/retro/catalog.py /srv/retro snes ~/libretro-database'
+rsync -a --exclude '*Zone.Identifier' roms/snes/ oracle:/srv/retro/roms/snes/
+ssh oracle "python3 ~/retro/catalog.py /srv/retro snes ~/libretro-database"
 ```
 
 A saída lista cada jogo; `SEM DADOS` = não achou no banco (ROM traduzida/hack): entra com o nome do arquivo e sem capa.
@@ -47,12 +47,12 @@ A saída lista cada jogo; `SEM DADOS` = não achou no banco (ROM traduzida/hack)
 ## Atualizar o emulador
 
 ```sh
-npm run core:build && scp dist/cores/snes.js vps:/srv/retro/cores/
+npm run core:build && scp dist/cores/snes.js oracle:/srv/retro/cores/
 ```
 
 ## Conferir
 
 ```sh
-curl -I http://<vps>:8088/<TOKEN>/catalog/snes.json   # 200
-curl -I http://<vps>:8088/catalog/snes.json           # 404
+curl -I http://<ip>:8088/<token>/catalog/snes.json   # 200
+curl -I http://<ip>:8088/catalog/snes.json           # 404
 ```
