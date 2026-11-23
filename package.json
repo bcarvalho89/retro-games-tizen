@@ -7,13 +7,15 @@
     "core:test": "node cores/core.test.mjs",
     "test": "node src/input.test.js && node src/grid.test.js && node src/ring.test.js && node src/saves.test.js",
     "build": "node --env-file=.env build.mjs",
-    "wgt": "npm run build && python3 pack.py",
-    "dev": "npm run build && node dev-server.mjs"
+    "wgt": "npm run build && npm run check:legacy && python3 pack.py",
+    "dev": "npm run build && node dev-server.mjs",
+    "check:legacy": "for f in app/main.js app/cores/*.js; do acorn --ecma2017 --silent $f || exit 1; done"
   },
   "dependencies": {
     "preact": "^11.2.0"
   },
   "devDependencies": {
+    "acorn": "^8.19.0",
     "esbuild": "^0.28.2"
   }
 }
