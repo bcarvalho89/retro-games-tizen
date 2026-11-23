@@ -57,6 +57,12 @@ def test_title_key_matches_goodtools_and_nointro():
     assert c.title_key("Legend of Zelda, The_ A Link to the Past") == c.title_key("Legend of Zelda, The - A Link to the Past (USA)")
 
 
+def test_symlink_target():
+    assert c.symlink_target(b"Donkey Kong Country (USA).png") == "Donkey Kong Country (USA)"
+    assert c.symlink_target(b"\x89PNG\r\n\x1a\n....") is None
+    assert c.symlink_target(b"<html>not found</html>") is None
+
+
 def test_extract_zips():
     with tempfile.TemporaryDirectory() as d:
         with zipfile.ZipFile(os.path.join(d, "Top Gear.zip"), "w") as z:

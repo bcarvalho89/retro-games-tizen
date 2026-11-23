@@ -124,17 +124,38 @@ def load_meta(database, system):
     return meta
 
 
+PNG = b"\x89PNG\r\n\x1a\n"
+
+
+def symlink_target(data):
+    """libretro-thumbnails stores aliases as git symlinks; raw.githubusercontent returns the target path as text."""
+    if data.startswith(PNG) or len(data) > 300:
+        return None
+    text = data.decode("utf-8", "replace").strip()
+    return text[:-4] if text.endswith(".png") and "\n" not in text and "<" not in text else None
+
+
+def _download(system, name):
+    url = THUMBS % (system.replace(" ", "_"), urllib.parse.quote(cover_name(name)))
+    with urllib.request.urlopen(url, timeout=30) as r:
+        return r.read()
+
+
 def fetch_cover(system, match, target):
     if os.path.exists(target):
         return True
     if not match:
         return False
-    url = THUMBS % (system.replace(" ", "_"), urllib.parse.quote(cover_name(match)))
     try:
-        with urllib.request.urlopen(url, timeout=30) as r:
-            data = r.read()
+        data = _download(system, match)
+        alias = symlink_target(data)
+        if alias:
+            data = _download(system, alias)
     except Exception as e:
         print("sem capa:", match, "-", e)
+        return False
+    if not data.startswith(PNG):
+        print("sem capa:", match, "- resposta não é PNG")
         return False
     os.makedirs(os.path.dirname(target), exist_ok=True)
     with open(target + ".tmp", "wb") as f:
