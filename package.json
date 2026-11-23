@@ -5,6 +5,15 @@
   "scripts": {
     "core:build": "./cores/build.sh snes",
     "core:test": "node cores/core.test.mjs",
-    "test": "node src/input.test.js && node src/grid.test.js && node src/ring.test.js && node src/saves.test.js"
+    "test": "node src/input.test.js && node src/grid.test.js && node src/ring.test.js && node src/saves.test.js",
+    "build": "node --env-file=.env build.mjs",
+    "wgt": "npm run build && python3 pack.py",
+    "dev": "npm run build && node dev-server.mjs"
+  },
+  "dependencies": {
+    "preact": "^11.2.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }

@@ -48,3 +48,21 @@ assert.strictEqual(c3([SS, 0], 600).open, false);
 assert.strictEqual(c3([SS, 0], 1100).open, true);
 
 console.log('input ok');
+
+{
+  const { createNav } = await import('./input.js');
+  const nav = createNav(400, 120);
+  const bit = b => 1 << b;
+  assert.deepStrictEqual(nav(bit(BTN.DOWN), 0), ['down']);
+  assert.deepStrictEqual(nav(bit(BTN.DOWN), 399), []);
+  assert.deepStrictEqual(nav(bit(BTN.DOWN), 400), ['down']);
+  assert.deepStrictEqual(nav(bit(BTN.DOWN), 519), []);
+  assert.deepStrictEqual(nav(bit(BTN.DOWN), 520), ['down']);
+  assert.deepStrictEqual(nav(0, 600), []);
+  assert.deepStrictEqual(nav(bit(BTN.A), 700), ['ok']);
+  assert.deepStrictEqual(nav(bit(BTN.A), 1500), []);
+  assert.deepStrictEqual(nav(bit(BTN.B) | bit(BTN.L), 1600), ['back', 'prev']);
+  assert.deepStrictEqual(nav(bit(BTN.R) | bit(BTN.START), 1700), ['next', 'ok']);
+  assert.deepStrictEqual(nav(0, 1800), []);
+  console.log('nav ok');
+}

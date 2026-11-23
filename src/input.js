@@ -55,3 +55,27 @@ export function createMenuCombo(holdMs = 500) {
     return { masks: masks.map(m => ((m & SS) === SS ? m & ~SS : m)), open: false };
   };
 }
+
+const NAV = [
+  ['up', [BTN.UP], true], ['down', [BTN.DOWN], true], ['left', [BTN.LEFT], true], ['right', [BTN.RIGHT], true],
+  ['back', [BTN.B], false], ['prev', [BTN.L], false], ['next', [BTN.R], false], ['ok', [BTN.A, BTN.START], false],
+];
+
+export function createNav(delay = 400, repeat = 120) {
+  const since = {};
+  const last = {};
+  return (mask, now) => {
+    const out = [];
+    for (const [name, bits, repeats] of NAV) {
+      if (!bits.some(b => mask & (1 << b))) { since[name] = null; continue; }
+      if (since[name] == null) {
+        since[name] = last[name] = now;
+        out.push(name);
+      } else if (repeats && now - since[name] >= delay && now - last[name] >= (last[name] === since[name] ? delay : repeat)) {
+        last[name] = now;
+        out.push(name);
+      }
+    }
+    return out;
+  };
+}
