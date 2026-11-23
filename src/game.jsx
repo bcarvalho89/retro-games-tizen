@@ -43,7 +43,7 @@ function startSession(consoleId, game, resume) {
     return new Uint8Array(res.data);
   });
   return Promise.all([
-    loadCore(SERVER, consoleId),
+    loadCore(consoleId),
     rom,
     saves.loadSram().catch(() => { throw new Error('save'); }),
     resume ? saves.loadState().catch(() => { throw new Error('save'); }) : null,
@@ -61,6 +61,7 @@ export function Game({ consoleId, game, resume, onExit }) {
   const [phase, setPhase] = useState('loading');
   const [hasState, setHasState] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [detail, setDetail] = useState('');
   const session = useRef(null);
   const paused = useRef(true);
 
@@ -104,7 +105,9 @@ export function Game({ consoleId, game, resume, onExit }) {
       s.resume();
       raf = requestAnimationFrame(tick);
     }, e => {
-      if (alive) setPhase(e.message === 'save' ? 'save-error' : 'error');
+      if (!alive) return;
+      setDetail(e.message);
+      setPhase(e.message === 'save' ? 'save-error' : 'error');
     });
 
     const down = e => {
@@ -169,7 +172,7 @@ export function Game({ consoleId, game, resume, onExit }) {
           onPick={i => (i === 0 ? (setPhase('loading'), setAttempt(attempt + 1)) : onExit())} onCancel={onExit} />
       )}
       {phase === 'error' && (
-        <Dialog text="Não foi possível abrir o jogo." options={['Tentar de novo', 'Voltar']}
+        <Dialog text={`Não foi possível abrir o jogo. (${detail})`} options={['Tentar de novo', 'Voltar']}
           onPick={i => (i === 0 ? (setPhase('loading'), setAttempt(attempt + 1)) : onExit())} onCancel={onExit} />
       )}
     </div>

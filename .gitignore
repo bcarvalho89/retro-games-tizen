@@ -10,3 +10,4 @@ docs/
 cores/vendor/
 server-data/
 __pycache__/
+app/cores/

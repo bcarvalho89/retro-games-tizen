@@ -3,7 +3,6 @@
 nginx em contêiner Docker (`retro-nginx`, porta 8088), ao lado do Caddy que já ocupa 80/443. Layout em `/srv/retro`:
 
 ```
-cores/snes.js          npm run core:build → dist/cores/snes.js
 roms/snes/             ROMs (.sfc/.smc/.fig; .zip é extraído pelo catálogo)
 covers/snes/           gerado
 catalog/snes.json      gerado
@@ -46,9 +45,7 @@ A saída lista cada jogo; `SEM DADOS` = não achou no banco (ROM traduzida/hack)
 
 ## Atualizar o emulador
 
-```sh
-npm run core:build && scp dist/cores/snes.js oracle:/srv/retro/cores/
-```
+O core vai dentro do `.wgt` (a TV 2018 não executa script vindo do servidor): `npm run core:build && npm run wgt` e reinstalar.
 
 ## Conferir
 

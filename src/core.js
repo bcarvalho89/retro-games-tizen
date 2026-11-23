@@ -10,9 +10,9 @@ function loadScript(src) {
   });
 }
 
-function factory(base, consoleId) {
+function factory(consoleId) {
   if (!factories[consoleId]) {
-    factories[consoleId] = loadScript(`${base}cores/${consoleId}.js`).then(() => {
+    factories[consoleId] = loadScript(`cores/${consoleId}.js`).then(() => {
       const f = window.RetroCore;
       delete window.RetroCore;
       return f;
@@ -28,9 +28,10 @@ function withBuffer(m, bytes, fn) {
   try { return fn(ptr); } finally { m._free(ptr); }
 }
 
+// cores ship inside the .wgt: the 2018 TV wouldn't run a <script> from the server.
 // a fresh module per game: libretro cores aren't safe to retro_init/load twice in one instance
-export function loadCore(base, consoleId) {
-  return factory(base, consoleId).then(f => f()).then(m => ({
+export function loadCore(consoleId) {
+  return factory(consoleId).then(f => f()).then(m => ({
     heapU8: m.HEAPU8,
     heap16: m.HEAP16,
     get fps() { return m._s_fps(); },

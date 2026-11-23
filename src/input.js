@@ -58,9 +58,10 @@ export function createMenuCombo(holdMs = 500) {
   return combo;
 }
 
+// menus follow the labels on modern pads (bottom button confirms, right goes back), the opposite of SNES's A/B positions
 const NAV = [
   ['up', [BTN.UP], true], ['down', [BTN.DOWN], true], ['left', [BTN.LEFT], true], ['right', [BTN.RIGHT], true],
-  ['back', [BTN.B], false], ['prev', [BTN.L], false], ['next', [BTN.R], false], ['ok', [BTN.A, BTN.START], false],
+  ['back', [BTN.A], false], ['prev', [BTN.L], false], ['next', [BTN.R], false], ['ok', [BTN.B, BTN.START], false],
 ];
 
 export function createNav(delay = 400, repeat = 120) {
