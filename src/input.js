@@ -35,7 +35,7 @@ export function keyMask(keyCode) {
 export function createMenuCombo(holdMs = 500) {
   let since = null;
   let swallowing = false;
-  return (masks, now) => {
+  const combo = (masks, now) => {
     if (swallowing) {
       if (masks.every(m => !m)) swallowing = false;
       return { masks: masks.map(() => 0), open: false };
@@ -54,6 +54,8 @@ export function createMenuCombo(holdMs = 500) {
     // SELECT+START reaching the game would act as in-game input (in SMW, pause+Select exits the level)
     return { masks: masks.map(m => ((m & SS) === SS ? m & ~SS : m)), open: false };
   };
+  combo.swallow = () => { swallowing = true; since = null; };
+  return combo;
 }
 
 const NAV = [
@@ -64,10 +66,16 @@ const NAV = [
 export function createNav(delay = 400, repeat = 120) {
   const since = {};
   const last = {};
+  // buttons already held when a screen opens (the menu combo, the A that launched a game) must not act on it
+  const stale = {};
+  let primed = false;
   return (mask, now) => {
     const out = [];
     for (const [name, bits, repeats] of NAV) {
-      if (!bits.some(b => mask & (1 << b))) { since[name] = null; continue; }
+      const down = bits.some(b => mask & (1 << b));
+      if (!primed) stale[name] = down;
+      if (!down) { since[name] = null; stale[name] = false; continue; }
+      if (stale[name]) continue;
       if (since[name] == null) {
         since[name] = last[name] = now;
         out.push(name);
@@ -76,6 +84,7 @@ export function createNav(delay = 400, repeat = 120) {
         out.push(name);
       }
     }
+    primed = true;
     return out;
   };
 }

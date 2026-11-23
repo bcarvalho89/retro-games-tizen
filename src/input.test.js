@@ -53,6 +53,7 @@ console.log('input ok');
   const { createNav } = await import('./input.js');
   const nav = createNav(400, 120);
   const bit = b => 1 << b;
+  assert.deepStrictEqual(nav(0, -1), []);
   assert.deepStrictEqual(nav(bit(BTN.DOWN), 0), ['down']);
   assert.deepStrictEqual(nav(bit(BTN.DOWN), 399), []);
   assert.deepStrictEqual(nav(bit(BTN.DOWN), 400), ['down']);
@@ -65,4 +66,25 @@ console.log('input ok');
   assert.deepStrictEqual(nav(bit(BTN.R) | bit(BTN.START), 1700), ['next', 'ok']);
   assert.deepStrictEqual(nav(0, 1800), []);
   console.log('nav ok');
+}
+
+{
+  const { createNav } = await import('./input.js');
+  const nav = createNav(400, 120);
+  const SSA = (1 << BTN.SELECT) | (1 << BTN.START) | (1 << BTN.A);
+  assert.deepStrictEqual(nav(SSA, 0), []);
+  assert.deepStrictEqual(nav(SSA, 500), []);
+  assert.deepStrictEqual(nav(0, 600), []);
+  assert.deepStrictEqual(nav(1 << BTN.START, 700), ['ok']);
+  assert.deepStrictEqual(createNav()(1 << BTN.DOWN, 0), []);
+  console.log('nav priming ok');
+}
+
+{
+  const combo = createMenuCombo(500);
+  combo.swallow();
+  assert.deepStrictEqual(combo([1 << BTN.A, 0], 0).masks, [0, 0]);
+  assert.deepStrictEqual(combo([0, 0], 10).masks, [0, 0]);
+  assert.deepStrictEqual(combo([1 << BTN.A, 0], 20).masks, [1 << BTN.A, 0]);
+  console.log('combo swallow ok');
 }
