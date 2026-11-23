@@ -32,18 +32,32 @@ export function keyMask(keyCode) {
   return KEYS[keyCode] === undefined ? 0 : 1 << KEYS[keyCode];
 }
 
-export function createMenuCombo(holdMs = 500) {
+export function createMenuCombo(holdMs = 500, soloMs = 80) {
   let since = null;
   let swallowing = false;
+  const latched = [false, false];
+  const solo = [null, null];
   const combo = (masks, now) => {
     if (swallowing) {
       if (masks.every(m => !m)) swallowing = false;
+      latched[0] = latched[1] = false;
+      solo[0] = solo[1] = null;
       return { masks: masks.map(() => 0), open: false };
     }
-    const held = masks.some(m => (m & SS) === SS);
+    let held = false;
+    // SELECT/START reaching the game act as in-game input (in SMW, pause+Select exits the level):
+    // once both were held, neither passes until both are released; a lone one waits soloMs in case its pair follows
+    const out = masks.map((m, i) => {
+      const ss = m & SS;
+      if (ss === SS) { latched[i] = true; held = true; }
+      if (!ss) { latched[i] = false; solo[i] = null; return m; }
+      if (latched[i]) return m & ~SS;
+      if (solo[i] === null) solo[i] = now;
+      return now - solo[i] >= soloMs ? m : m & ~SS;
+    });
     if (!held) {
       since = null;
-      return { masks, open: false };
+      return { masks: out, open: false };
     }
     if (since === null) since = now;
     if (now - since >= holdMs) {
@@ -51,11 +65,29 @@ export function createMenuCombo(holdMs = 500) {
       swallowing = true;
       return { masks: masks.map(() => 0), open: true };
     }
-    // SELECT+START reaching the game would act as in-game input (in SMW, pause+Select exits the level)
-    return { masks: masks.map(m => ((m & SS) === SS ? m & ~SS : m)), open: false };
+    return { masks: out, open: false };
   };
   combo.swallow = () => { swallowing = true; since = null; };
   return combo;
+}
+
+const KEY_ACTIONS = {
+  38: 'up', 40: 'down', 37: 'left', 39: 'right', 13: 'ok', 404: 'ok',
+  10009: 'back', 27: 'back', 8: 'back', 403: 'back',
+  33: 'prev', 427: 'prev', 34: 'next', 428: 'next',
+};
+const REPEATS = { up: 1, down: 1, left: 1, right: 1 };
+
+// a held Back/OK auto-repeats on some remotes: the repeat would close the menu the first press opened
+export function keyAction(e) {
+  const a = KEY_ACTIONS[e.keyCode] || null;
+  return a && e.repeat && !REPEATS[a] ? null : a;
+}
+
+export function playerNumber(gamepads, index) {
+  let n = 1;
+  for (let i = 0; i < index && i < gamepads.length; i++) if (gamepads[i]) n++;
+  return n;
 }
 
 // menus follow the labels on modern pads (bottom button confirms, right goes back), the opposite of SNES's A/B positions

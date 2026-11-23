@@ -18,18 +18,26 @@ export function createVideo(canvas) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  let px = null;
   return {
     draw(core) {
       const f = core.frame();
       if (!f.w) return;
-      if (canvas.width !== f.w || canvas.height !== f.h) {
+      if (!px || canvas.width !== f.w || canvas.height !== f.h || px.byteOffset !== f.ptr) {
         canvas.width = f.w;
         canvas.height = f.h;
         gl.viewport(0, 0, f.w, f.h);
+        px = new Uint16Array(core.heapU8.buffer, f.ptr, f.w * f.h);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, f.w, f.h, 0, gl.RGB, gl.UNSIGNED_SHORT_5_6_5, px);
+      } else {
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, f.w, f.h, gl.RGB, gl.UNSIGNED_SHORT_5_6_5, px);
       }
-      const px = new Uint16Array(core.heapU8.buffer, f.ptr, f.w * f.h);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, f.w, f.h, 0, gl.RGB, gl.UNSIGNED_SHORT_5_6_5, px);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    },
+    // browsers cap live WebGL contexts (~16); each game creates one
+    destroy() {
+      const ext = gl.getExtension('WEBGL_lose_context');
+      if (ext) ext.loseContext();
     },
   };
 }

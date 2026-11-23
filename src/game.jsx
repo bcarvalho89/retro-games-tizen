@@ -77,7 +77,7 @@ export function Game({ consoleId, game, resume, onExit }) {
       const autosave = createAutosave({ saves, read: () => core.sram() });
       autosave.onError = () => toast('Não foi possível salvar. Tentando de novo…');
       const combo = createMenuCombo(500);
-      const s = session.current = { core, saves, audio, autosave, start: 0, done: 0 };
+      const s = session.current = { core, saves, audio, video, autosave, start: 0, done: 0 };
       const openMenu = () => { paused.current = true; audio.suspend(); setPhase('menu'); };
       s.openMenu = openMenu;
       s.resume = () => { combo.swallow(); s.start = performance.now(); s.done = 0; paused.current = false; audio.resume(); setPhase('playing'); };
@@ -131,10 +131,12 @@ export function Game({ consoleId, game, resume, onExit }) {
       window.removeEventListener('keydown', down);
       window.removeEventListener('keyup', up);
       document.removeEventListener('visibilitychange', hidden);
-      if (session.current) session.current.audio.close();
+      if (session.current) { session.current.audio.close(); session.current.video.destroy(); }
       session.current = null;
     };
   }, [attempt]);
+
+  useNav(a => { if (a === 'back') onExit(); }, phase === 'loading');
 
   const pick = item => {
     const s = session.current;

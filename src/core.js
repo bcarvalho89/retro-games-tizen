@@ -22,8 +22,10 @@ function factory(consoleId) {
   return factories[consoleId];
 }
 
+// memory is fixed (no growth): a failed malloc returns 0 and writing there would corrupt the heap
 function withBuffer(m, bytes, fn) {
   const ptr = m._malloc(bytes.length);
+  if (!ptr) return false;
   m.HEAPU8.set(bytes, ptr);
   try { return fn(ptr); } finally { m._free(ptr); }
 }
@@ -38,6 +40,7 @@ export function loadCore(consoleId) {
     get rate() { return m._s_rate(); },
     load(rom) {
       const ptr = m._malloc(rom.length);
+      if (!ptr) return false;
       m.HEAPU8.set(rom, ptr);
       return m._s_load(ptr, rom.length) === 1;
     },
@@ -55,6 +58,7 @@ export function loadCore(consoleId) {
     saveState() {
       const size = m._s_state_size();
       const ptr = m._malloc(size);
+      if (!ptr) return null;
       try {
         return m._s_save_state(ptr) === 1 ? m.HEAPU8.slice(ptr, ptr + size) : null;
       } finally { m._free(ptr); }

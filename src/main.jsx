@@ -41,7 +41,7 @@ function useHasState(consoleId, game) {
     }, 250);
     return () => clearTimeout(t);
   }, [key]);
-  return { has: !!(key && has[key]), forget: () => setHas(h => Object.assign({}, h, { [key]: undefined })) };
+  return !!(key && has[key]);
 }
 
 function Library({ state, onPlay }) {
@@ -68,7 +68,7 @@ function Library({ state, onPlay }) {
   const current = tabs && tabs[Math.min(tab, tabs.length - 1)];
   const games = current ? current.games : [];
   const game = games[focus];
-  const { has } = useHasState(current && current.id, game);
+  const has = useHasState(current && current.id, game);
   const buttons = has ? ['Jogar', 'Continuar'] : ['Jogar'];
 
   const remember = (t, f) => { state.tab = t; state.focus[t] = f; };

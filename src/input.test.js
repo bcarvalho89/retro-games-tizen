@@ -35,6 +35,8 @@ assert.deepStrictEqual(r, { masks: [0, 0], open: false });
 r = combo([0, 0], 800);
 assert.deepStrictEqual(r, { masks: [0, 0], open: false });
 r = combo([1 << BTN.START, 0], 900);
+assert.deepStrictEqual(r, { masks: [0, 0], open: false });
+r = combo([1 << BTN.START, 0], 980);
 assert.deepStrictEqual(r, { masks: [1 << BTN.START, 0], open: false });
 
 const c2 = createMenuCombo(500);
@@ -100,4 +102,35 @@ console.log('input ok');
   keys.clear();
   assert.strictEqual(keys.mask(), 0);
   console.log('keys ok');
+}
+
+{
+  const combo = createMenuCombo(500);
+  const S = 1 << BTN.START, L = 1 << BTN.SELECT, J = 1 << BTN.B;
+  assert.deepStrictEqual(combo([S | J, 0], 0).masks, [J, 0]);
+  assert.deepStrictEqual(combo([S, 0], 79).masks, [0, 0]);
+  assert.deepStrictEqual(combo([S, 0], 80).masks, [S, 0]);
+  combo([0, 0], 100);
+  combo([S, 0], 200);
+  combo([S | L, 0], 240);
+  assert.deepStrictEqual(combo([L, 0], 300).masks, [0, 0]);
+  assert.deepStrictEqual(combo([L, 0], 900).masks, [0, 0]);
+  assert.deepStrictEqual(combo([0, 0], 950).masks, [0, 0]);
+  assert.deepStrictEqual(combo([L, 0], 1000).masks, [0, 0]);
+  assert.deepStrictEqual(combo([L, 0], 1080).masks, [L, 0]);
+  console.log('combo edges ok');
+}
+
+{
+  const { keyAction, playerNumber } = await import('./input.js');
+  assert.strictEqual(keyAction({ keyCode: 10009, repeat: false }), 'back');
+  assert.strictEqual(keyAction({ keyCode: 10009, repeat: true }), null);
+  assert.strictEqual(keyAction({ keyCode: 13, repeat: true }), null);
+  assert.strictEqual(keyAction({ keyCode: 40, repeat: true }), 'down');
+  assert.strictEqual(keyAction({ keyCode: 27, repeat: false }), 'back');
+  assert.strictEqual(keyAction({ keyCode: 65, repeat: false }), null);
+  assert.strictEqual(playerNumber([null, {}, {}], 1), 1);
+  assert.strictEqual(playerNumber([null, {}, {}], 2), 2);
+  assert.strictEqual(playerNumber([{}, null, null], 2), 2);
+  console.log('keyAction/playerNumber ok');
 }
