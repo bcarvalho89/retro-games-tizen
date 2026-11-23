@@ -1,0 +1,9 @@
+{
+  "name": "retro-games",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "core:build": "./cores/build.sh snes",
+    "core:test": "node cores/core.test.mjs"
+  }
+}

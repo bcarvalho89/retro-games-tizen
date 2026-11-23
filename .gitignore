@@ -6,3 +6,5 @@ node_modules/
 dist/
 app/main.js
 docs/
+cores/vendor/
+server-data/
