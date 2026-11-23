@@ -5,6 +5,6 @@
   "scripts": {
     "core:build": "./cores/build.sh snes",
     "core:test": "node cores/core.test.mjs",
-    "test": "node src/input.test.js && node src/grid.test.js && node src/ring.test.js"
+    "test": "node src/input.test.js && node src/grid.test.js && node src/ring.test.js && node src/saves.test.js"
   }
 }
