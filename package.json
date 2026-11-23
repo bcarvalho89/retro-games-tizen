@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "core:build": "./cores/build.sh snes",
-    "core:test": "node cores/core.test.mjs"
+    "core:test": "node cores/core.test.mjs",
+    "test": "node src/input.test.js && node src/grid.test.js && node src/ring.test.js"
   }
 }
